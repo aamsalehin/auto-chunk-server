@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { MongoClient, ObjectId } = require("mongodb");
+const { query } = require("express");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 4000;
@@ -47,6 +48,20 @@ async function run() {
       const parts = await cursor.toArray();
       res.send(parts);
     });
+    //post part
+    app.post("/parts", async (req, res) => {
+      const part = req.body;
+      const result = await partsCollection.insertOne(part);
+      res.send(result);
+    });
+    //delete part
+    app.delete("/parts/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await partsCollection.deleteOne(query);
+      res.send(result);
+    });
+    //get single parts details and purchase
     app.get("/parts/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -84,6 +99,15 @@ async function run() {
         res.status(403).send({ message: "forbidden access" });
       }
     });
+    //api for updating parts
+    app.put("/parts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const part = req.body;
+      const updateDoc = { $set: part };
+      const result = await partsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     //api for user put in database
 
     app.put("/user/:email", async (req, res) => {
@@ -105,6 +129,13 @@ async function run() {
       const users = await userCollection.find().toArray();
       res.send(users);
     });
+    //get alll orders
+    app.get("/orders/admin", verifyJWT, async (req, res) => {
+      const orders = await orderCollection.find().toArray();
+      res.send(orders);
+    });
+    //get alll orders
+
     //get single user
     app.get("/user/:email", async (req, res) => {
       const email = req.params.email;
